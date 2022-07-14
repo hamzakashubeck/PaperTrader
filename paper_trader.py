@@ -1,6 +1,7 @@
 import csv
 import requests
 from bs4 import BeautifulSoup
+from turtledemo.chaos import jumpto
     
 acct_balance = 10000.0
 inv = []
@@ -11,8 +12,13 @@ def run_test():
     global acct_balance
     global inv
     
-    print('buy 10 tesla \n')
-    buy("TSLA",10)
+    print('buy 5 tesla \n')
+    buy("TSLA",5)
+    print(inv)
+    print(acct_balance)
+    
+    print('buy 10 twitter \n')
+    buy("TWTR",10)
     print(inv)
     print(acct_balance)
     
@@ -26,8 +32,8 @@ def run_test():
     print(inv)
     print(acct_balance)
     
-    print('\n\n sell 9 teslas \n')
-    sell("TSLA",9)
+    print('\n\n sell 4 teslas \n')
+    sell("TSLA",4)
     print(inv)
     print(acct_balance)
     
@@ -82,27 +88,31 @@ def process_buy(ticker,qty,cost):
 #determines if a stock can be sold, and then passes the operation to process_sell
 def sell(ticker,qty):
     global acct_balance
+    global inv
     #DEAL WITH SELL CONSTRAINTS HERE - stock is in inv, qty <= held qty, etc
     for entry in inv:
         if ticker in entry and qty <= int(entry[1]):
             process_sell(ticker,qty)
+            return
 
 #executes a market sell order
 def process_sell(ticker,qty):
     global inv
     global acct_balance
+    found = False
     
     price = get_price(ticker)*qty
     
     acct_balance += price
     for entry in inv:
-        if ticker in entry:
+        if ticker in entry and not found:
             index = inv.index(entry)
             old_entry = inv.pop(index)
             qty = int(old_entry[1])-qty
             price = float(old_entry[2])-price
+            found = True
     if qty != 0:
-        inv.append([ticker,qty,price])
+        inv.append([ticker,qty,round(price,2)])
     update_csv()
 
 #pushes the inventory and current balance into the csv file
