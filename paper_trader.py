@@ -61,15 +61,22 @@ def get_price(ticker):
             #if the request fails, try again!
             print("Pricing request failed. Trying again...")
             count -=1
-    print("Something went wrong. The ticker symbol may be invalid.")
+    print("Something went wrong.")
 
 #determines if a stock can be purchased, and then passes the operation to process_buy
 def buy(ticker,qty):
     #DEAL WITH BUY CONSTRAINTS HERE - enough money, valid ticker, etc
     global acct_balance
-    cost = get_price(ticker)*qty
+    
+    try:
+        cost = get_price(ticker)*qty
+    except TypeError:
+            print("Ticker symbol appears to be invalid. The buy order for \'" +ticker+ "\' will not be executed.")
+            return
     if cost < acct_balance:
         process_buy(ticker,qty,cost)
+    else:
+        print("You do not have enough cash on hand to purchase this security. The buy order for \'" +ticker+ "\' will not be executed.")
 
 #executes a market buy order
 def process_buy(ticker,qty,cost):
