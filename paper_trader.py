@@ -40,7 +40,6 @@ def run_test():
 def import_existing_csv():
     global acct_balance
     global inv
-    acct_balance = -40.0
     inv = []
     with open('CurrentPortfolio.csv','r') as infile:
         file_reader = csv.reader(infile)
