@@ -1,7 +1,6 @@
 import csv
 import requests
 from bs4 import BeautifulSoup
-from turtledemo.chaos import jumpto
     
 acct_balance = 10000.0
 inv = []
