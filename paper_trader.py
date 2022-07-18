@@ -50,9 +50,10 @@ def import_existing_csv():
                 
 #returns the price of the given security
 def get_price(ticker):    
-    count = 3
-    while True and count>0:
+    count = 5
+    while count>0:
         try:
+            print('Loading pricing information for '+ ticker+'...')
             rh_html = requests.get('https://robinhood.com/stocks/'+ticker.upper()).text
             rh_soup = BeautifulSoup(rh_html, 'lxml')
             return round(float(rh_soup.find('span', class_ = 'up')['aria-label'][1:]),2)
@@ -67,13 +68,12 @@ def buy(ticker,qty):
     #DEAL WITH BUY CONSTRAINTS HERE - enough money, valid ticker, etc
     global acct_balance
     
-    try:
-        cost = get_price(ticker)*qty
-    except TypeError:
-            print("Ticker symbol appears to be invalid. The buy order for \'" +ticker+ "\' will not be executed.")
-            return
+    price = get_price(ticker)
+    cost = price*qty
+
     if cost < acct_balance:
         process_buy(ticker,qty,cost)
+        print('\nBought '+str(qty)+ ' '+ticker+ ' for $' +str(price)+ ' each.')
     else:
         print("You do not have enough cash on hand to purchase this security. The buy order for \'" +ticker+ "\' will not be executed.")
 
@@ -108,6 +108,7 @@ def process_sell(ticker,qty):
     
     price = get_price(ticker)*qty
     
+    print('Sold '+str(qty)+ ' '+ticker+ ' for $' +str(price)+ ' total.')
     acct_balance += price
     for entry in inv:
         if ticker in entry and not found:
@@ -118,6 +119,7 @@ def process_sell(ticker,qty):
             found = True
     if qty != 0:
         inv.append([ticker,qty,round(price,2)])
+    
     update_csv()
 
 #pushes the inventory and current balance into the csv file
@@ -131,5 +133,31 @@ def update_csv():
         for entry in inv:
             csvwriter.writerow(entry)
 
+#POSSIBLE INPUTS: "buy", "sell", "balance", "inventory"
+def handle_input(command):
+    global acct_balance
+    global inv
+    
+    print('\n')
+    if command.lower() in 'buy':
+        ticker = input("Type in the ticker symbol to purchase: ").upper()
+        qty = int(input("How many " + ticker+ " would you like to buy?"))
+        buy(ticker,qty)
+    elif command.lower() in 'sell':
+        ticker = input("Type in the ticker symbol to sell: ").upper()
+        qty = int(input(ticker+'\'s current price is $'+str(get_price(ticker)) + ". How many " + ticker+ " would you like to sell?"))
+        sell(ticker,qty)
+    elif command.lower() in 'inv':
+        print('Current portfolio: '+str(inv))
+    elif command.lower() in 'balance':
+        print('Cash balance: $'+str(round(acct_balance,2)))
+    print('\n')
+        
+def get_command():
+    command = input('Type \"balance\" to view your overall currency balance.\nType \"inv\" to view your stock portfolio.\nType \"buy\" to purchase a new stock.\nType \"sell\" to sell an owned stock.\n')
+    return command
 
-run_test()
+import_existing_csv()
+while True:
+    cmd = get_command()
+    handle_input(cmd)
