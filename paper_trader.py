@@ -1,6 +1,5 @@
 import csv
-import requests
-from bs4 import BeautifulSoup
+from yahooquery import Ticker
     
 acct_balance = 10000.0
 inv = []
@@ -49,19 +48,12 @@ def import_existing_csv():
         inv.pop(0)
                 
 #returns the price of the given security
-def get_price(ticker):    
-    count = 5
-    print('Loading current pricing information for '+ ticker+'...')
-    while count>0:
-        try:
-            rh_html = requests.get('https://robinhood.com/stocks/'+ticker.upper()).text
-            rh_soup = BeautifulSoup(rh_html, 'lxml')
-            return round(float(rh_soup.find('span', class_ = 'up')['aria-label'][1:]),2)
-        except TypeError:
-            #if the request fails, try again!
-            print("Pricing request failed. Trying again...")
-            count -=1
-    print("Something went wrong.")
+def get_price(ticker):
+    try:
+        stock = Ticker(ticker)
+        return stock.price[ticker.upper()]['regularMarketPrice']
+    except:
+        print('Invalid ticker symbol.\n')
 
 #determines if a stock can be purchased, and then passes the operation to process_buy
 def buy(ticker,qty):
@@ -142,7 +134,10 @@ def handle_input(command):
     print('\n')
     if command.lower() in 'buy':
         ticker = input("Type in the ticker symbol to purchase: ").upper()
-        qty = int(input(ticker+'\'s current price is $'+str(get_price(ticker)) + ". How many would you like to buy?"))
+        price = get_price(ticker)
+        if not price:
+            return
+        qty = int(input(ticker+'\'s current price is $'+str(price) + ". How many would you like to buy?"))
         buy(ticker,qty)
     elif command.lower() in 'sell':
         ticker = input("Type in the ticker symbol to sell: ").upper()
